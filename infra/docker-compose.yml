@@ -1,0 +1,17 @@
+services:
+  ln_gamma_fit:
+    build:
+      context: ${INFRA}
+      dockerfile: Dockerfile
+    restart: no
+    image: ${IMAGE_NAME}
+    container_name: ${CONTAINER_NAME}
+    volumes:
+      - ${APP}:/workspace
+    networks:
+      - shared-net
+
+networks:
+  shared-net:
+    external: true
+    name: subspace

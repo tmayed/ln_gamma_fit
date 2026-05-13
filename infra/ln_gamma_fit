@@ -1,0 +1,93 @@
+#!/bin/bash
+
+
+SCRIPT_NAME="ln_gamma_fit"
+
+export GITHUB_PROJECTS="$HOME/github"
+export REPO="$GITHUB_PROJECTS/$SCRIPT_NAME"
+export APP="$REPO/app"
+export INFRA="$REPO/infra"
+
+export CONTAINER_NAME="$SCRIPT_NAME"
+export IMAGE_NAME="$SCRIPT_NAME"
+
+SERVICE_NAME="$SCRIPT_NAME"
+SCRIPT_PATH="$HOME/bin/$SCRIPT_NAME"
+
+######################################################
+
+function nuke() {
+    docker container prune -f
+    docker images --filter "dangling=true" -q | xargs -r docker rmi
+    docker volume prune -f
+    docker builder prune -a -f
+}
+
+function copy_to_bin() {
+    echo "💾 Copying script from $INFRA to $SCRIPT_PATH..."
+    sudo cp "$INFRA/$SCRIPT_NAME" "$SCRIPT_PATH"
+    sudo chmod +x "$SCRIPT_PATH"
+    echo "✅ System script updated."
+    exit 0
+}
+
+######################################################
+
+function restart() {
+    build
+    up
+}
+
+function up() {
+    docker compose -f "$INFRA/docker-compose.yml" up -d ${SERVICE_NAME}
+}
+
+function down() {
+    echo 'here'
+    echo $INFRA
+    docker compose -f "$INFRA/docker-compose.yml" down
+    echo 'not here'
+}
+
+function shell() {
+    docker compose -f "$INFRA/docker-compose.yml" exec ${SERVICE_NAME} bash
+}
+
+function purge() {
+    docker compose -f "$INFRA/docker-compose.yml" down --rmi all --volumes --remove-orphans
+}
+
+function build() {
+    purge
+    docker compose -f "$INFRA/docker-compose.yml" build --no-cache ${SERVICE_NAME}
+    nuke
+}
+
+function logs() {
+    docker compose -f "$INFRA/docker-compose.yml" logs -f ${SERVICE_NAME}
+}
+
+function env_var() {
+    docker inspect ${CONTAINER_NAME} 2>/dev/null | jq '.[0].Config.Env'
+}
+
+function passthrough() {
+    docker compose -f "$INFRA/docker-compose.yml" exec ${SERVICE_NAME} "$@"
+}
+
+######################################################
+
+case "$1" in
+    nuke)       nuke ;;
+    copy)       copy_to_bin ;;
+    restart)    restart ;;
+    up)         up ;;
+    down)       down ;;
+    shell)      shell ;;
+    purge)      purge ;;
+    build)      build ;;
+    logs)       logs ;;
+    env_var)    env_var ;;
+    *)
+    passthrough "$@" ;;
+esac

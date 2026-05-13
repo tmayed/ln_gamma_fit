@@ -1,0 +1,8 @@
+#!/bin/bash
+
+if [ $# -eq 0 ]; then
+    echo "Error: Please provide a command to run."
+    echo "Usage: run-env <command>"
+    exit 1
+fi
+ssh appuser@ln_gamma_fit "cd /workspace && $*"
