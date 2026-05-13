@@ -1,6 +1,5 @@
 #!/bin/bash
 
-
 SCRIPT_NAME="ln_gamma_fit"
 
 export GITHUB_PROJECTS="$HOME/github"
